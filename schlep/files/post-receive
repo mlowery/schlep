@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+
+set -e
+
+my_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "$my_dir/schlep-lib.sh"
+
+
+trap 'die ${LINENO} "post-receive hook failed"' ERR
+
+if [[ $SCHLEP_HOOK_DEBUG == 1 ]]; then
+    LOG_VERBOSITY=$_log_level_debug
+    set -x
+fi
+
+refs=0
+# you can push multiple refs at once but schlep should not allow that
+while read tmp_oldrev tmp_newrev tmp_refname
+do
+    refs=$((refs+1))
+    oldrev=$tmp_oldrev
+    newrev=$tmp_newrev
+    refname=$tmp_refname
+done
+
+if [[ $refs > 1 ]]; then
+    die $LINENO "you cannot push more than one ref at a time"
+fi
+
+log_info "Old revision: $oldrev"
+log_info "New revision: $newrev"
+log_info "Reference name: $refname"
+
+post_receive_d="$my_dir/post-receive.d"
+
+[[ -d $post_receive_d ]] || die $LINENO "$post_receive_d is missing"
+
+# unset all GIT_* variables since they mess up git operations and we don't need them
+# http://serverfault.com/a/107703
+unset $(git rev-parse --local-env-vars)
+
+for file in $post_receive_d/*; do
+    if [[ -x $file ]]; then
+        if [[ $file =~ .source.sh$ ]]; then
+            log_debug "Sourcing $file"
+            source "$file" $oldrev $newrev $refname
+        else
+            log_debug "Running $file"
+            "$file" $oldrev $newrev $refname
+        fi
+    else
+        log_warning "Skipping $file (not executable)"
+    fi
+done
+
+trap - ERR
