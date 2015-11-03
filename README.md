@@ -51,10 +51,13 @@ schlep uses Python 2.7 **only** for the command line interface (i.e. hook setup)
 `post-receive`, it's all Bash. For the Python part, it only needs the standard 
 library.
 
-## Installation
+## Installation (on Ubuntu 14.04)
 
 ```bash
-$ python setup.py install  # with or without sudo
+$ sudo apt-get -y -q install git-core python-dev python-pip
+$ git clone https://github.com/mlowery/schlep.git
+$ cd schlep
+$ sudo python setup.py install
 ```
 
 ## Usage
