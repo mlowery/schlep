@@ -91,6 +91,12 @@ schlep add-subhook schlep_with_bad_subhook $bad_subhook --as-file 50-bad-subhook
 
 # schlep run-hook
 
+schlep init schlep_with_work_dir_no_start_repo_dir --work-dir "$test_dir/work_schlep_with_work_dir_no_start_repo_dir"
+if ! schlep run-hook schlep_with_work_dir_no_start_repo_dir; then
+    # passed
+    true
+fi
+
 schlep run-hook schlep_with_work_dir --debug
 clone_master=$(cd "$test_dir/work_schlep_with_work_dir" && git rev-parse HEAD)
 

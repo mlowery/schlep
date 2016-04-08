@@ -41,7 +41,7 @@ if ! git_cmd "$WORK_DIR" remote -v | grep -e "origin\s\+$bare_repo/\?\s\+(fetch)
 fi
 
 # sanity check when user doesn't use `init --start-repo` and tries to do run-hook
-if ! git show-ref --quiet; then
+if ! git_cmd "$WORK_DIR" show-ref --quiet; then
 die $LINENO "There are no refs in $bare_repo. You cannot run \"run-hook\" without any refs. Specify \"--start-repo\" during \"init\" to get some refs."
 fi
 
