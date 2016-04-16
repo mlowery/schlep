@@ -54,7 +54,7 @@ schlep is 100% pure Bash. Tested on Bash 4.x.
 ```bash
 $ git clone https://github.com/mlowery/schlep.git
 $ cd schlep
-$ alias schlep="$(pwd)/schlep"  # add to ~/.bashrc
+$ alias schlep="$(pwd)/schlep"  # persist to all logins with: echo alias schlep="$(pwd)/schlep" >> ~/.bashrc
 ```
 
 ## Usage
@@ -72,9 +72,10 @@ Assume that the content of `50-deploy-foo.sh` is:
 ```bash
 #!/usr/bin/env bash
 
-# if $SCHLEP_WORK_DIR is already where the code should live, then just restart your sevrvice
+# if $SCHLEP_WORK_DIR is already where the code should live, then skip this step
 sudo rsync -avhW --no-compress $SCHLEP_WORK_DIR/foo /some/place/where/foo/lives
 
+# restart upstart-based service
 sudo restart foo
 ```
 
