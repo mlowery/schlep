@@ -52,7 +52,8 @@ schlep is 100% pure Bash. Tested on Bash 4.x.
 
 ```bash
 $ git clone https://github.com/mlowery/schlep.git
-$ alias schlep="$pwd/schlep/schlep"  # add to ~/.bashrc
+$ cd schlep
+$ alias schlep="$(pwd)/schlep"  # add to ~/.bashrc
 ```
 
 ## Usage
