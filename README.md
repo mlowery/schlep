@@ -14,6 +14,7 @@ You need to deploy something. You could rsync. But you already have git. Git can
 ## How
 
 There are actually three git repos involved:
+
 1. a repo where you commit to and push from (e.g. your laptop)
 2. a "bare" repo (i.e. has no work tree) which receives the push (this is where the hook is installed)
 3. a clone of the bare repo (typically co-located with the bare repo) that serves either as a staging directory for your 
