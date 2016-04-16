@@ -47,7 +47,11 @@ subhooks receive these as command line arguments.
 
 ## Requirements
 
-schlep is 100% pure Bash. Tested on Bash 4.x.
+schlep is 100% pure Bash. Tested on Bash 4.x. Tested on OS X.
+
+## Assumptions
+
+For remotes (i.e. `-s|--host-string`, it is assumed that passwordless SSH is set up.
 
 ## Installation
 
@@ -86,6 +90,7 @@ $ schlep /home/bar/repos/foo.git -s bar@foo-deploy-vm --work-dir /home/bar/foo -
 ```
 
 Every time to push latest code:
+
 ```bash
 $ git push test
 ```
