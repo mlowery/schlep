@@ -47,11 +47,11 @@ subhooks receive these as command line arguments.
 
 ## Requirements
 
-schlep is 100% pure Bash. Tested on Bash 4.x. Tested on OS X.
+schlep is 100% pure Bash. Tested on Bash 4.x. Tested on OS X and Ubuntu. Tested with Git 2.7
 
 ## Assumptions
 
-For remotes (i.e. `-s|--host-string`, it is assumed that passwordless SSH is set up.
+For remotes (i.e. `-s|--host-string`), it is assumed that passwordless SSH is set up.
 
 ## Installation
 
