@@ -47,7 +47,7 @@ subhooks receive these as command line arguments.
 
 ## Requirements
 
-schlep is 100% pure Bash. Tested on Bash 4.x. Tested on OS X and Ubuntu. Tested with Git 2.7
+schlep is 100% pure Bash. Tested on Bash 4.x. Tested with Git 1.9 (Ubuntu) and 2.7 (OS X).
 
 ## Assumptions
 
