@@ -54,7 +54,7 @@ $ git push test
 Counting objects: 3, done.
 Writing objects: 100% (3/3), 212 bytes | 0 bytes/s, done.
 Total 3 (delta 0), reused 0 (delta 0)
-INFO updating from none to 6f27998cb0a2bf6b128dcac5fb945c41d5b22a8c
+INFO updating from none to 6f22998cb0a2bf6b128dcac5fb945c41d5b22a8c
 To user1@host1:/home/user1/repo1
  * [new branch]      HEAD -> master
 $ ssh user1@host1 "ls -la /home/user1/repo1/master-file"
