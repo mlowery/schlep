@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+
+set -euo pipefail
+IFS=$'\n\t'
+
+my_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# necessary for all of the git commands to work and makes writing subhooks easier
+# ../.. is for .git/hooks
+cd $my_dir/../..
+
+source "$my_dir/schlep-lib.sh"
+
+trap 'die ${LINENO} "push-to-checkout hook failed"' ERR
+
+
+oldrev="none"
+newrev="$1"
+
+if git rev-parse HEAD &> /dev/null; then
+    # only fetch oldrev if we have commits
+    oldrev=$(git rev-parse HEAD)
+fi
+
+log_info "updating from $oldrev to $newrev"
+
+# quiet exits with 1 if there were differences and 0 means no differences
+if ! git diff --quiet; then
+    log_info "Stashing changes..."
+    git stash save "schlep-$(safe_date)"
+fi
+
+# stolen from https://github.com/git/git/commit/0855331941b723b227e93b33955bbe0b45025659
+git update-index -q --refresh
+
+if [[ $oldrev != none ]]; then
+    git read-tree -u -m HEAD "$newrev"
+else
+    git read-tree -u -m "$newrev"
+fi
+
+push_d="$my_dir/push.d"
+
+[[ -d $push_d ]] || die $LINENO "$push_d is missing"
+
+for file in $push_d/*; do
+    if [[ -x $file ]]; then
+        if [[ $file =~ .source.sh$ ]]; then
+            log_debug "Sourcing $file"
+            source "$file" $newrev
+        else
+            log_debug "Running $file"
+            "$file" $newrev
+        fi
+    else
+        log_warning "Skipping $file (not executable)"
+    fi
+done
+
+trap - ERR

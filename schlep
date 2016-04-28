@@ -1,47 +1,17 @@
 #!/usr/bin/env bash
 
-# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+# stolen from http://redsymbol.net/articles/unofficial-bash-strict-mode/
 
 set -euo pipefail
 IFS=$'\n\t'
 
-# Sourcing A Nonconforming Document
-#set +u
-#source /path/to/venv/bin/activate
-#set -u
-
-# Positional Parameters
-# ${VARNAME:-DEFAULT_VALUE} evals to DEFAULT_VALUE if VARNAME undefined.
-# So here, $bar is set to "alpha":
-# bar=${foo:-alpha}
-
-# Commands You Expect To Have Nonzero Exit Status
-# set +e
-# count=$(grep -c some-string some-file)
-# retval=$?
-# set -e
-
-
-exit_funcs=()
-
-finish() {
-    # nothing to do
-    true
-}
-
-#exit_funcs+=("finish")
-
 exit_trap() {
-    # syntax from http://stackoverflow.com/a/34361807 (handles empty array)
-    for exit_func in ${exit_funcs[@]+"${exit_funcs[@]}"}
-    do
-        eval "$exit_func"
-    done
+    true
 }
 
 trap "exit_trap" EXIT
 
-# Some functions borrowed from DevStack (https://github.com/openstack-dev/devstack)
+# Some functions stolen from DevStack (https://github.com/openstack-dev/devstack)
 
 # Prints line number and "message" then exits
 # die $LINENO "message"
@@ -82,10 +52,11 @@ NAME
     schlep - set up git push-to-deploy
 
 USAGE
-    schlep <bare-remote>
-           [-s|--host-string <user@host>]
-           [-w|--work-dir <remote-work-dir>]
+    schlep user@host:/remote/git/repo/dir
+    or
+    schlep /local/git/repo/dir
            [-r|--remote-name <remote-name>]
+           [-f|--file <subhook-file>]
            [-h|--help]
 
 DEFAULTS
@@ -111,19 +82,17 @@ fi
 
 # first arg should never be a flag
 if [[ ${1-} =~ ^-.*$ ]]; then
-    usage "ERROR: <bare-remote> is required"
+    usage "ERROR: <git-repo-dir> is required"
 fi
 
-bare_remote=${1-}
-if [[ ! $bare_remote ]]; then
-    usage "ERROR: <bare-remote> is required"
+connection=${1-}
+if [[ ! $connection ]]; then
+    usage "ERROR: <git-repo-dir> is required"
 fi
 
 shift
 
 remote_name=test
-work_remote=""
-user_and_host=""
 subhook_files=()
 
 while (( $# > 0 )); do
@@ -131,14 +100,6 @@ key="$1"
 shift
 
 case $key in
-    -s|--host-string)
-    user_and_host="$1"
-    shift
-    ;;
-    -w|--work-dir)
-    work_remote="$1"
-    shift
-    ;;
     -r|--remote_name)
     remote_name=$1
     shift
@@ -156,52 +117,48 @@ case $key in
 esac
 done
 
-sanity_check
+if is_local "$connection"; then
+    user_and_host=""
+    git_repo_dir="$connection"
+else
+    user_and_host="${connection%%:*}"
+    git_repo_dir="${connection##*:}"
+fi
+
+sanity_check "$user_and_host"
 
 
-log_info "creating bare repo [$bare_remote] and adding master post-receive hook"
-bare_init_cmd="
-if [[ ! -d $bare_remote ]]; then
-    mkdir -p $bare_remote
-    (cd $bare_remote && git init --bare)
-    mkdir $bare_remote/hooks/post-receive.d
+log_info "creating git repo [$git_repo_dir] and adding master push-to-checkout hook"
+init_cmd="
+if [[ ! -d $git_repo_dir ]]; then
+    mkdir -p $git_repo_dir
+    (cd $git_repo_dir && git init && git config receive.denyCurrentBranch updateInstead)
+    mkdir $git_repo_dir/.git/hooks/push.d
 fi
 "
 
-run "$user_and_host" "$bare_init_cmd"
-copy $schlep_files/post-receive $user_and_host:$bare_remote/hooks
-copy $schlep_files/schlep-lib.sh $user_and_host:$bare_remote/hooks
-
-if [[ $work_remote ]]; then
-    log_info "adding default subhook [15-fetch.sh] (clone/fetch from bare repo to [$work_remote])"
-    run "$user_and_host" "
-echo export SCHLEP_WORK_DIR=$work_remote > $bare_remote/hooks/post-receive.d/10-work-dir.source.sh
-chmod +x $bare_remote/hooks/post-receive.d/10-work-dir.source.sh
-"
-    copy $schlep_files/15-fetch.sh $user_and_host:$bare_remote/hooks/post-receive.d
-fi
+run "$user_and_host" "$init_cmd"
+copy $schlep_files/push-to-checkout $connection/.git/hooks
+copy $schlep_files/schlep-lib.sh $connection/.git/hooks
 
 # syntax from http://stackoverflow.com/a/34361807 (handles empty array)
 for subhook_file in ${subhook_files[@]+"${subhook_files[@]}"}; do
     log_info "adding subhook file [$subhook_file]"
-    copy $subhook_file $user_and_host:$bare_remote/hooks/post-receive.d
+    copy $subhook_file $connection/.git/hooks/push.d
     if [[ ! -x $subhook_file ]]; then
-        run "$user_and_host" "chmod +x $bare_remote/hooks/post-receive.d/$(basename $subhook_file)"
+        run "$user_and_host" "chmod +x $git_repo_dir/.git/hooks/push.d/$(basename $subhook_file)"
     fi
 done
 
 log_info "adding remote named [$remote_name]"
 
-if [[ $user_and_host ]]; then
-    remote_path=$user_and_host:$bare_remote
-else
-    remote_path=$bare_remote
-fi
-
 if ! git remote -v | grep "^$remote_name[[:blank:]]" > /dev/null; then
-    git remote add $remote_name $remote_path
+    git remote add $remote_name $connection
 fi
 
+# this means HEAD is always force-pushed to master; this is necessary when 
+# working with multiple branches since master is the only branch that is ever 
+# checked out on the receiving repo
 git config --local remote.$remote_name.push +HEAD:refs/heads/master
 
 # -----

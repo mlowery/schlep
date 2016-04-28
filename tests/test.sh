@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# function makes the test invocations read better
 schlep() {
     $my_dir/../schlep "${@}"
 }
@@ -51,7 +52,6 @@ touch branch2-file
 git add -A
 git commit -m "branch2 commit"
 
-# affects clone --bare
 git checkout master
 
 git branch -v
@@ -70,41 +70,36 @@ if ! schlep --not-correct; then
     true  # passed
 fi
 
-# ********** schlep no work dir **********
+# ********** schlep, branches **********
 
-schlep $test_dir/repos/schlep_default.git
+schlep $test_dir/repos/schlep_default --file $my_dir/../schlep-files/20-test-subhook.sh --file $my_dir/../schlep-files/21-test-subhook.sh 
+
+[[ -x $test_dir/repos/schlep_default/.git/hooks/push.d/20-test-subhook.sh ]]
+[[ -x $test_dir/repos/schlep_default/.git/hooks/push.d/21-test-subhook.sh ]]
 
 git push test
 
-clone_master=$(cd "$test_dir/repos/schlep_default.git" && git rev-parse HEAD)
+clone_master=$(cd "$test_dir/repos/schlep_default" && git rev-parse HEAD)
 
 [[ $clone_master == $master_hash ]]
 
-git remote rm test
-
-# ********** schlep with work dir **********
-
-schlep $test_dir/repos/schlep_with_work_dir.git -w "$test_dir/work/schlep_with_work_dir"
-
-git push test
-
-[[ -f $test_dir/work/schlep_with_work_dir/master-file ]]
+[[ -f $test_dir/repos/schlep_default/master-file ]]
 
 git checkout branch1
 git push test
 
-[[ -f $test_dir/work/schlep_with_work_dir/branch1-file ]]
+[[ -f $test_dir/repos/schlep_default/branch1-file ]]
 
-# ********** stash **********
+# ********** schlep, stashing **********
 
-touch "$test_dir/work/schlep_with_work_dir/file1"  # makes stash do some work
-ls "$test_dir/work/schlep_with_work_dir/branch1-file"
-echo hello > "$test_dir/work/schlep_with_work_dir/branch1-file"  # makes stash do some work
+touch "$test_dir/repos/schlep_default/file1"  # makes stash do some work
+ls "$test_dir/repos/schlep_default/branch1-file"
+echo hello > "$test_dir/repos/schlep_default/branch1-file"  # makes stash do some work
 git checkout branch2
 git push test
-ls "$test_dir/work/schlep_with_work_dir/file1"  # confirm still there
-[[ ! -f "$test_dir/work/schlep_with_work_dir/branch1-file" ]]
-[[ -f "$test_dir/work/schlep_with_work_dir/branch2-file" ]]
+ls "$test_dir/repos/schlep_default/file1"  # confirm still there
+[[ ! -f "$test_dir/repos/schlep_defaultr/branch1-file" ]]  # confirm branch1-file not there
+[[ -f "$test_dir/repos/schlep_default/branch2-file" ]]  # confirm branch2-file is there
 
 trap - ERR
 echo "OK"

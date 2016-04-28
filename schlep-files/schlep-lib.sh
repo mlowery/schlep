@@ -26,25 +26,11 @@ function err {
     return $exitcode
 }
 
-# Test if the named environment variable is set and not zero length
-# is_set env-var
-is_set() {
-    local var=\$"$1"
-    eval "[ -n \"$var\" ]" # For ex.: sh -c "[ -n \"$var\" ]" would be better, but several exercises depends on this
-}
-
 # date for use in filenames
 safe_date() {
     date +%Y_%m_%d__%H_%M_%S_%N
 }
 
-git_cmd() {
-    local repo_path=$1
-    shift
-    # this doesn't work with stash so do the other way: cd in a subshell
-    #git --git-dir $SCHLEP_WORK_DIR/.git --work-tree $SCHLEP_WORK_DIR "$@"
-    (cd "$repo_path" && git "$@")
-}
 
 _log_level_error=1
 _log_level_warning=2
@@ -106,15 +92,55 @@ do_in_ssh() {
 copy() {
     src="${1?src is required}"
     dest="${2?dest is required}"
-    if [[ $dest =~ ^:.*$ ]]; then
-        cp $src ${dest:1}
+    if is_local "$dest"; then
+        cp "$src" "$dest"
     else
-        rsync -p -e "$schlep_ssh" $src $dest
+        rsync -p -e "$schlep_ssh" "$src" "$dest"
     fi
 }
 
+is_local() {
+    local git_repo_dir="${1?git_repo_dir is required}"
+    # if it contains a colon, then it's remote
+    [[ ! $git_repo_dir =~ : ]]
+}
+
 sanity_check() {
+    local user_and_host="${1-}"
     if [[ -d ./git ]]; then
         die $LINENO "current directory is not a git repository"
     fi
+    local ver_string
+    if [[ $user_and_host ]]; then
+        # awk runs on the entire ssh response
+        ver_string=$(do_in_ssh $user_and_host "git --version" | awk '/git version / {print $3}')
+    else
+        # match `git version` since hub tool might be present
+        ver_string=$(git --version | awk '/git version / {print $3}')
+    fi
+    check_git_version "$ver_string"
 }
+
+check_git_version() {
+    local ver_string="${1?ver_string is required}"
+    local err_msg="schlep requires git version 2.4 or later"
+    IFS_OLD=$IFS
+    IFS=' '
+    # http://stackoverflow.com/a/5257398
+    local ver_array=(${ver_string//./ })
+    
+    local major=${ver_array[0]}
+    local minor=${ver_array[1]}
+    IFS=$IFS_OLD
+    if [[ $major < 2 ]]; then
+        die $LINENO $err_msg
+    fi
+    if [[ $major > 2 ]]; then
+        return 0
+    fi
+    if [[ $minor < 4 ]]; then
+        die $LINENO $err_msg
+    fi
+    return 0
+}
+
