@@ -169,7 +169,7 @@ $ git push test
 
 ### Forcing a Hook to Run
 
-git won't run hooks if the commit is already present on the receiving end. So you can amend the last commit (thereby creating changing the existing HEAD) and pushing that.
+git won't run hooks if the commit is already present on the receiving end. So you can amend the last commit (i.e. change HEAD to a new commit) and push that.
 
 ```bash
 $ git commit --amend --no-edit
