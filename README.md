@@ -48,14 +48,14 @@ $ git commit -m initial
  create mode 100644 master-file
 $ schlep user1@host1:/home/user1/repo1
 INFO creating git repo [/home/user1/repo1] and adding master push-to-checkout hook
-Initialized empty Git repository in /home/stack/user1/.git/
+Initialized empty Git repository in /home/user1/repo1/.git/
 INFO adding remote named [test]
 $ git push test
 Counting objects: 3, done.
 Writing objects: 100% (3/3), 212 bytes | 0 bytes/s, done.
 Total 3 (delta 0), reused 0 (delta 0)
 INFO updating from none to 6f27998cb0a2bf6b128dcac5fb945c41d5b22a8c
-To stack@ubuntugit-7317.phx01.dev.ebayc3.com:/home/stack/repo1
+To user1@host1:/home/user1/repo1
  * [new branch]      HEAD -> master
 $ ssh user1@host1 "ls -la /home/user1/repo1/master-file"
 -rw-rw-r-- 1 user1 user1 0 Apr 24 18:53 /home/user1/repo1/master-file
