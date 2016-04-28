@@ -33,7 +33,7 @@ $ alias schlep="$(pwd)/schlep"  # persist to all logins with: echo alias schlep=
 
 ## Quick Start
 
-Create a local git repo. Add a file to it. Use schlep to configure the remote receiving git repo. Push the change.
+The below example shows: Creating a local git repo. Adding a file to it. Using schlep to configure the remote receiving git repo. Pushing the change.
 
 ```bash
 $ cd ~
@@ -59,13 +59,6 @@ To stack@ubuntugit-7317.phx01.dev.ebayc3.com:/home/stack/repo1
  * [new branch]      HEAD -> master
 $ ssh user1@host1 "ls -la /home/user1/repo1/master-file"
 -rw-rw-r-- 1 user1 user1 0 Apr 24 18:53 /home/user1/repo1/master-file
-
-# change directory to a local git clone
-$ cd ~/src/repo1
-# one time setup (creates remote receiving repo and installs hooks)
-$ schlep user1@host1:/home/user/repo1
-# run this each time you want to push changes
-$ git push test
 ```
 
 ## Prerequisites
