@@ -11,13 +11,13 @@ You need to deploy something. You could `rsync`. But you already have `git`. Git
     * You broke something? Check the [log](https://git-scm.com/docs/git-log).
     * You always amend the last commit? Check the [reflog](https://git-scm.com/docs/git-reflog).
 
-tl;dr: schlep is a way of copying changes intelligently and doing whatever is necessary on the destination to get your changes where and how you ultimately want them.
+tl;dr schlep is a way of copying changes intelligently and doing whatever is necessary on the destination to get your changes where and how you ultimately want them.
 
 ## How
 
 schlep does the following for you:
 
-1. Creates a remote (or local) non-bare git repo with a `push-to-checkout` hook and any subhooks. The main hook:
+1. Creates a remote (or local) non-bare git repo with a `push-to-checkout` hook and any subhooks. The main hook (on pushes) does the following:
 	1. Stashes any uncommitted changes (in case you were hacking around).
 	2. Updates the currently checked out branch (always `master`). (Untracked files are left in place.)
 	3. Runs any "subhooks" in `.git/hooks/push.d`. Subhooks are numbered scripts that can do anything you want (e.g. restart affected services). You never edit the main `push-to-checkout` hook.
@@ -33,7 +33,33 @@ $ alias schlep="$(pwd)/schlep"  # persist to all logins with: echo alias schlep=
 
 ## Quick Start
 
+Create a local git repo. Add a file to it. Use schlep to configure the remote receiving git repo. Push the change.
+
 ```bash
+$ cd ~
+$ git init repo1
+Initialized empty Git repository in /Users/user1/repo1/.git/
+$ cd repo1
+$ touch master-file
+$ git add -A
+$ git commit -m initial
+[master (root-commit) 6f22998] initial
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 master-file
+$ schlep user1@host1:/home/user1/repo1
+INFO creating git repo [/home/user1/repo1] and adding master push-to-checkout hook
+Initialized empty Git repository in /home/stack/user1/.git/
+INFO adding remote named [test]
+$ git push test
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 212 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+INFO updating from none to 6f27998cb0a2bf6b128dcac5fb945c41d5b22a8c
+To stack@ubuntugit-7317.phx01.dev.ebayc3.com:/home/stack/repo1
+ * [new branch]      HEAD -> master
+$ ssh user1@host1 "ls -la /home/user1/repo1/master-file"
+-rw-rw-r-- 1 user1 user1 0 Apr 24 18:53 /home/user1/repo1/master-file
+
 # change directory to a local git clone
 $ cd ~/src/repo1
 # one time setup (creates remote receiving repo and installs hooks)
@@ -82,15 +108,15 @@ If creating a remote git repo (which is the more common scenario), you'll need p
 
 ## Limitations
 
-schlep is only meant as a deployment mechanism. It is not meant as a backup--it doesn't even preserve branches (all branches are force-pushed to `master` on the receiving end. Furthermore, it is only appropriate for single users.
+schlep is only meant as a deployment mechanism. It is not meant as a backup--it doesn't even preserve branches (all branches are force-pushed to `master` on the receiving end). Furthermore, it is only appropriate for a single user.
 
 ## Writing Subhooks
 
-subhooks can be written in anything as long as they are runnable. However, subhooks that end in `.source.sh` will be sourced rather than executed meaning that any exported variables (e.g. `export x=1`) will be available for later subhooks to consume. This can keep your subhooks generic by simply consuming variables defined earlier that control the generic subhook's behavior. Finally, subhooks receive the same arguments that git passes to the master `push-to-checkout` hook (the new revision). Consult the git documentation for the meaning of this value. Finally, current working directory while the subhook is running is the git repo work tree (i.e. where git repo branch contents are).
+subhooks can be written in any language as long as they are executable. However, subhooks that end in `.source.sh` will be sourced rather than executed meaning that any exported variables (e.g. `export x=1`) will be available for later subhooks to consume. This can keep your subhooks generic by simply consuming variables defined earlier that control the generic subhook's behavior. Finally, subhooks receive the same arguments that git passes to the master `push-to-checkout` hook (the new revision). Consult the git documentation for the meaning of this value. Finally, the current working directory while the subhook is running is the git repo work tree (i.e. where git repo branch contents are).
 
 ## Usage Examples
 
-In the examples below, assume a user named `user1`, a host named `host1`, a repo named `repo1`.
+In the examples below, assume a user named `user1`, a host named `host1`, and a repo named `repo1`.
 
 ### Simple Deploy
 
@@ -107,7 +133,7 @@ $ git push test
 Copy and restart. Assumes an Upstart-based service (`/etc/init/repo1`).
 
 ```bash
-cat << EOF > /tmp/50-restart.sh
+$ cat << EOF > /tmp/50-restart.sh
 sudo restart repo1
 EOF
 # one time setup
@@ -118,18 +144,19 @@ $ git push test
 
 ### Deploy and Copy Again
 
-Copy and copy again.
+Copy and copy again. This could be used if you need to write as `root`.
 
 ```bash
-cat << EOF > /tmp/50-copy.sh
+$ cat << EOF > /tmp/50-copy.sh
 sudo rsync -avhW --no-compress . /some/place/where/repo1/files/should/go
 EOF
 # one time setup
 $ schlep user1@host1:/home/user/repo1 --file /tmp/50-copy.sh
 # run this each time you want to push changes
 $ git push test
+```
 
-### Forcing the Hook to Run
+### Forcing a Hook to Run
 
 ```bash
 $ git commit --amend --no-edit

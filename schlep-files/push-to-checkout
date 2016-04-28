@@ -3,6 +3,13 @@
 
 set -euo pipefail
 IFS=$'\n\t'
+nullglob_orig=$(shopt -p | grep nullglob)
+
+exit_trap() {
+    eval "$nullglob_orig"
+}
+
+trap "exit_trap" EXIT
 
 my_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -44,6 +51,8 @@ push_d="$my_dir/push.d"
 
 [[ -d $push_d ]] || die $LINENO "$push_d is missing"
 
+# necessary to avoid empty dir
+shopt -s nullglob
 for file in $push_d/*; do
     if [[ -x $file ]]; then
         if [[ $file =~ .source.sh$ ]]; then
