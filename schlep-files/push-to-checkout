@@ -3,10 +3,10 @@
 
 set -euo pipefail
 IFS=$'\n\t'
-nullglob_orig=$(shopt -p | grep nullglob)
 
 exit_trap() {
-    eval "$nullglob_orig"
+    printf '=%.0s' {1..80}
+    printf '\n'
 }
 
 trap "exit_trap" EXIT
@@ -21,6 +21,8 @@ source "$my_dir/schlep-lib.sh"
 
 trap 'die ${LINENO} "push-to-checkout hook failed"' ERR
 
+printf '=%.0s' {1..80}
+printf '\n'
 
 oldrev="none"
 newrev="$1"
@@ -51,9 +53,9 @@ push_d="$my_dir/push.d"
 
 [[ -d $push_d ]] || die $LINENO "$push_d is missing"
 
-# necessary to avoid empty dir
-shopt -s nullglob
 for file in $push_d/*; do
+    # $file is "/some/dir/push.d/*" when push.d is empty due to default globbing behavior (which is nullglob=off)
+    [[ -f "$file" ]] || continue
     if [[ -x $file ]]; then
         if [[ $file =~ .source.sh$ ]]; then
             log_debug "Sourcing $file"

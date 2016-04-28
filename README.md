@@ -149,7 +149,27 @@ $ schlep user1@host1:/home/user/repo1 --file /tmp/50-copy.sh
 $ git push test
 ```
 
+### Adding an Additional Subhook Later
+
+schlep can safely be run multiple times with additional arguments. Be aware though that subhooks are never removed.
+
+```bash
+$ cat << EOF > /tmp/50-something.sh
+echo "hello from $0"
+EOF
+# one time setup
+$ schlep user1@host1:/home/user/repo1 --file /tmp/50-something.sh
+$ cat << EOF > /tmp/50-something-else.sh
+echo "hello from $0"
+EOF
+$ schlep user1@host1:/home/user/repo1 --file /tmp/50-something.sh --file /tmp/50-something-else.sh
+# run this each time you want to push changes
+$ git push test
+```
+
 ### Forcing a Hook to Run
+
+git won't run hooks if the commit is already present on the receiving end. So you can amend the last commit (thereby creating changing the existing HEAD) and pushing that.
 
 ```bash
 $ git commit --amend --no-edit

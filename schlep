@@ -52,11 +52,9 @@ NAME
     schlep - set up git push-to-deploy
 
 USAGE
-    schlep user@host:/remote/git/repo/dir
-    or
-    schlep /local/git/repo/dir
+    schlep [user@host:/remote/git/repo/dir | /local/git/repo/dir]
            [-r|--remote-name <remote-name>]
-           [-f|--file <subhook-file>]
+           [-f|--file <subhook-file>...]
            [-h|--help]
 
 DEFAULTS
@@ -132,7 +130,12 @@ log_info "creating git repo [$git_repo_dir] and adding master push-to-checkout h
 init_cmd="
 if [[ ! -d $git_repo_dir ]]; then
     mkdir -p $git_repo_dir
-    (cd $git_repo_dir && git init && git config receive.denyCurrentBranch updateInstead)
+fi
+if [[ ! -d $git_repo_dir/.git ]]; then
+    (cd $git_repo_dir && git init)
+fi
+(cd $git_repo_dir && git config receive.denyCurrentBranch updateInstead)
+if [[ ! -d $git_repo_dir/.git/hooks/push.d ]]; then
     mkdir $git_repo_dir/.git/hooks/push.d
 fi
 "

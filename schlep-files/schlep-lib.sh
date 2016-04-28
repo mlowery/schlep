@@ -143,4 +143,3 @@ check_git_version() {
     fi
     return 0
 }
-
