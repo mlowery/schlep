@@ -37,6 +37,7 @@ log_info "updating from $oldrev to $newrev"
 # quiet exits with 1 if there were differences and 0 means no differences
 if ! git diff --quiet; then
     log_info "Stashing changes..."
+    # intentionally not adding `-u` or `-a` to `save` in order to keep untracked and ignored files
     git stash save "schlep-$(safe_date)"
 fi
 
