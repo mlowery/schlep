@@ -101,7 +101,7 @@ If creating a remote git repo (which is the more common scenario), you'll need p
 
 ## Limitations
 
-schlep is only meant as a deployment mechanism. It is not meant as a backup--it doesn't even preserve branches (all branches are force-pushed to `master` on the receiving end). Furthermore, it is only appropriate for a single user.
+schlep is only meant as a deployment mechanism. It is not meant as a backup--it doesn't even preserve branches (all branches are force-pushed to `master` on the receiving end). Furthermore, it is only appropriate for a single user (since branches are clobbered).
 
 ## Writing Subhooks
 
@@ -137,7 +137,7 @@ $ git push test
 
 ### Deploy and Copy Again
 
-Copy and copy again. This could be used if you need to write as `root`.
+Copy and copy again. This could be used if you need to copy to the ultimate destination using `sudo`.
 
 ```bash
 $ cat << EOF > /tmp/50-copy.sh
