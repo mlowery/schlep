@@ -176,6 +176,10 @@ $ git commit --amend --no-edit
 $ git push test
 ```
 
+## Troubleshooting
+
+If the default branch isn't `master`, you'll need to check that branch out on the target as schlep only pushes to the `master` branch.
+
 ## References
 
 * [Git 2.4 — atomic pushes, push to deploy, and more](https://github.com/blog/1994-git-2-4-atomic-pushes-push-to-deploy-and-more)
