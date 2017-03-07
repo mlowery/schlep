@@ -132,13 +132,13 @@ check_git_version() {
     local major=${ver_array[0]}
     local minor=${ver_array[1]}
     IFS=$IFS_OLD
-    if [[ $major < 2 ]]; then
+    if (( $major < 2 )); then
         die $LINENO $err_msg
     fi
-    if [[ $major > 2 ]]; then
+    if (( $major > 2 )); then
         return 0
     fi
-    if [[ $minor < 4 ]]; then
+    if (( $minor < 4 )); then
         die $LINENO $err_msg
     fi
     return 0
